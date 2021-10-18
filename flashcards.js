@@ -10,6 +10,18 @@ function std_addition() {
   return all_cards;
 }
 
+function d2pd1_addition() {
+  var all_cards = []
+  for (var i = 0; i < 100; i++) {
+    for (var j = 0; j < 10; j++) {
+      var card = i.toString() + " + " + j.toString() + " = _";
+      var answer = i + j;
+      all_cards.push([card, answer]);
+    }
+  }
+  return all_cards;
+}
+
 function std_subtraction() {
   var all_cards = []
   for (var i = 1; i < 10; i++) {
@@ -17,6 +29,18 @@ function std_subtraction() {
       var answer = i + j
       var card = answer.toString() + " - " + i.toString() + " = _";
       answer = j;
+      all_cards.push([card, answer]);
+    }
+  }
+  return all_cards;
+}
+
+function simple_subtraction() {
+  var all_cards = []
+  for (var i = 1; i <= 10; i++) {
+    for (var j = i; j >= 0; j--) {
+      var card = i.toString() + " - " + j.toString() + " = _";
+      var answer = i - j;
       all_cards.push([card, answer]);
     }
   }
@@ -49,9 +73,9 @@ function std_division() {
 }
 
 // Configuration
-var mode = std_addition;
-var num_cards = 10;
-var secs = 60 * 5;
+var mode = /*std_multiplication;//*/d2pd1_addition;
+var num_cards = 25;
+var secs = num_cards * 5;
 var timeout = false;//true;
 
 // State
