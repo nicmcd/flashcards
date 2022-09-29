@@ -168,7 +168,6 @@ function event_code_numeric_value(code) {
   } else if (code == 'Numpad9' || code == 'Digit9') {
     return '9';
   } else {
-    console.log(code)
     return null;
   }
 }
