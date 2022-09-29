@@ -73,7 +73,7 @@ function std_division() {
 }
 
 // Configuration
-var mode = /*std_multiplication;//*/d2pd1_addition;
+var mode = std_subtraction;//std_multiplication;//*/d2pd1_addition;
 var num_cards = 25;
 var secs = num_cards * 5;
 var timeout = false;//true;
@@ -91,17 +91,18 @@ var fail_log = [];
 
 // https://stackoverflow.com/a/29816921/2116585
 function msToHrMinSec(ms) {
-  var seconds = parseInt(ms / 1000);
+  var seconds = ms / 1000;
+  var secondsR = Math.round(seconds * 100) / 100
   var hours = parseInt(seconds / 3600);
   seconds = seconds % 3600;
   var minutes = parseInt(seconds / 60);
   seconds = seconds % 60;
   if (hours > 0) {
-    return hours + "h:" + minutes + "m:" + seconds + "s";
+    return hours + "h:" + minutes + "m:" + secondsR + "s";
   } else if (minutes > 0) {
-    return minutes + "m:" + seconds + "s";
+    return minutes + "m:" + secondsR + "s";
   } else {
-    return seconds + "s";
+    return secondsR + "s";
   }
 }
 
@@ -121,71 +122,26 @@ function get_random_cards(all_cards, num) {
   return rnd_cards;
 }
 
-
-  /*
-  if (mode == 0) {
-    for (var i = 1; i < 10; i++) {
-      var card = i.toString();
-      card += " + ";
-      card += (10-i).toString();
-      card += " = _";
-      cards.push(card);
-    }
-  } else if (mode == 1) {
-    for (var i = 1; i < 10; i++) {
-      var card = i.toString();
-      card += " + _ = 10";
-      cards.push(card);
-    }
-  } else if (mode == 2) {
-    for (var i = 1; i < 10; i++) {
-      var card = "10 + _ = ";
-      card += (10+i).toString();
-      cards.push(card);
-    }
-  } else if (mode == 3) {
-    for (var i = 1; i < 10; i++) {
-      for (var j = 1; j < 10; j++) {
-        var card = (i*10+j).toString() + " + 10 = ";
-        cards.push(card);
-      }
-    }
-  } else if (mode == 4) {
-    for (var i = 1; i < 10; i++) {
-      for (var j = 1; j < 10; j++) {
-        var n = j * 10 + i;
-        var o = (j + 1) * 10;
-        cards.push(n.toString() + " + _ = " + o.toString());
-      }
-    }
-  } else if (mode == 5) {
-    for (var i = 0; i <= 12; i++) {
-      for (var j = 0; j <= 12; j++) {
-        var ans = i * j;
-        cards.push(i.toString() + " x " + j.toString() + " = _");
-      }
-    }
-  } else if (mode == 6) {
-    for (var i = 2; i <= 8; i++) {
-      for (var j = 2; j <= 8; j++) {
-        if (i + j <= 10) {
-          var ans = i + j;
-          cards.push(i.toString() + " + " + j.toString() + " = _");
-        }
-      }
-    }
-  } else if (mode == 7) {
-    for (var i = 0; i <= 10; i++) {
-      cards.push(i.toString() + " + " + i.toString() + " = _");
-    }
-  } else {
-    console.log("ERROR: invalid mode " + mode.toString());
-  }
-  */
-
-
 function init() {
   var all_cards = mode();
+
+  // Verifies all cards are properly formatted
+  var error = false;
+  all_cards.forEach(card => {
+    if (card.length != 2) {
+      console.log(card + ": is NOT length 2");
+      error = true;
+    }
+    if (!card[0].includes("_")) {
+      console.log(card[0] + ": does NOT include a '_'");
+      error = true;
+    }
+  })
+  if (error) {
+    set_card_text("ERROR")
+    return;
+  }
+
   cards = get_random_cards(all_cards, num_cards)
   console.log("Created " + cards.length.toString() + " cards");
 }
@@ -212,6 +168,7 @@ function event_code_numeric_value(code) {
   } else if (code == 'Numpad9' || code == 'Digit9') {
     return '9';
   } else {
+    console.log(code)
     return null;
   }
 }
@@ -230,7 +187,7 @@ function key_event(event) {
     }
   } else if (state == 'test') {
     // Numeric values gather, Backspace/Delete clears, Enter completes
-    if (event.code == 'Enter') {
+    if (event.code == 'Enter' || event.code == 'NumpadEnter') {
       console.log('Answer: ' + answer);
       if (parseInt(answer) == curr_card[1]) {
         passed += 1;
@@ -238,9 +195,6 @@ function key_event(event) {
         failed += 1;
         fail_log.push([curr_card[0], curr_card[1], answer]);
       }
-      /*console.log('Left=' +
-                  (num_cards - passed - failed).toString() + ' time=' +
-                  msToHrMinSec(Date.now() - start_time));*/
       if (passed + failed == num_cards) {
         end_time = Date.now();
         state = 'done';
@@ -249,14 +203,22 @@ function key_event(event) {
         next_card();
       }
       answer = '';
-    } else if (event.code == 'Backspace' || event.code == 'Delete') {
+    } else if (event.code == 'Backspace') {
+      if (answer.length > 0) {
+        answer = answer.slice(0, -1)
+      }
+      console.log('answer: ' + answer);
+      set_card_with_answer(curr_card[0], answer)
+    } else if (event.code == 'Delete') {
       answer = '';
       console.log('answer: ' + answer);
+      set_card_with_answer(curr_card[0], answer)
     } else {
       var number = event_code_numeric_value(event.code);
       if (number != null) {
         answer += number;
         console.log('answer: ' + answer);
+        set_card_with_answer(curr_card[0], answer)
       }
     }
   } else if (state == 'done') {
@@ -280,7 +242,18 @@ function next_card() {
   }
   curr_card = cards[0];
   cards.splice(0, 1);
-  document.getElementById("flashcard").innerHTML = curr_card[0];
+  set_card_text(curr_card[0]);
+}
+
+function set_card_with_answer(card_text, answer) {
+  if (answer != "") {
+    card_text = card_text.replace("_", answer)
+  }
+  set_card_text(card_text)
+}
+
+function set_card_text(text) {
+  document.getElementById("flashcard").innerHTML = text;
 }
 
 function percent(a, b, digits) {
@@ -296,7 +269,11 @@ function finish() {
   html += "<br>";
   html += "Score: " + percent(passed, num_cards, 0);
   html += "<br>";
-  html += "Time: " + msToHrMinSec(end_time - start_time);
+  var total_time = end_time - start_time;
+  html += "Total Time: " + msToHrMinSec(total_time);
+  html += "<br>";
+  var per_time = total_time / num_cards;
+  html += "Card Time: " + msToHrMinSec(per_time);
   html += "</p>";
   document.getElementById("flashcard").innerHTML = html;
   document.getElementById("flashcard").style.fontSize = "150px";
